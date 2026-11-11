@@ -1,4 +1,4 @@
-# Model Finance
+# FinComplaint ML
 
 Projeto de análise de reclamações de consumidores sobre produtos e serviços financeiros.
 

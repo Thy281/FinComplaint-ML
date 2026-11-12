@@ -29,7 +29,7 @@ def validate_dates(df):
     if missing_dates > 0:
         raise ValueError("Existem datas ausentes no dataset.")
 
-    # Ordenar da data mais antiga para a masi recente
+    # Ordenar da data mais antiga para a mais recente
     df = df.sort_values(
         by = "date_received"
     ).reset_index(drop = True)
@@ -48,21 +48,27 @@ def split_data(df):
     # Calcular os pontos de corte
     n = len(df)
 
+    # N = numero de linhas do df (555.957)
     train_end = int(n * train_size)
     test_end = int(n * (train_size + test_size))
 
     # Obter as datas de corte
+    # Aqui vamos pegar a linha ao qual temos o valor de 70% do treino e 85% do teste com o iloc
     train_cutoff = df["date_received"].iloc[train_end]
     oot_cutoff = df["date_received"].iloc[test_end]
 
     # Separar por datas, sem dividir o mesmo dia
+    # Selecione todas as reclamações cuja data seja anterior a 29/04/2015.
+    # Portanto temos 01/12/2011 <-> 29/04/2015
     train = df[df["date_received"] < train_cutoff].copy()
 
+    # Valores 29/04/2015 <-> 18/10/2015
     test = df[
         (df["date_received"] >= train_cutoff)
         & (df["date_received"] < oot_cutoff)
     ].copy()
 
+    # Valores 19/10/2015 <-> 25/04/2016
     oot = df[df["date_received"] >= oot_cutoff].copy()
 
     return train, test, oot

@@ -28,7 +28,7 @@ def create_features(df):
 
     df["date_received"] = pd.to_datetime(
         df["date_received"],
-        errors = "coerce"
+        errors = "coerce" # NaT
     )
 
     # Extrair info da data da reclamacao

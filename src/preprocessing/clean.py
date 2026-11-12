@@ -13,7 +13,7 @@ print(df.shape)
 print(df.columns.to_list())
 
 # %%
-# Corrigindo Datas
+# Corrigindo Datas: str -> obj
 
 def convert_dates(df):
     df = df.copy()

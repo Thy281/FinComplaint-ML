@@ -1,6 +1,8 @@
 # %%
 
-from sklearn.pipeline import Pipeline
+from imblearn.pipeline import Pipeline
+from imblearn.over_sampling import RandomOverSampler
+from imblearn.under_sampling import RandomUnderSampler
 from sklearn.compose import ColumnTransformer
 from sklearn.impute import SimpleImputer
 from sklearn.preprocessing import OneHotEncoder
@@ -11,6 +13,7 @@ from xgboost import XGBClassifier
 from sklearn.naive_bayes import BernoulliNB
 import numpy as np
 import pandas as pd
+
 
 # %%
 
@@ -86,16 +89,37 @@ def create_bernoulli_preprocessor():
 
 # %%
 
-def create_pipeline(model):
+def create_pipeline(model, sampling = None):
     if isinstance(model, BernoulliNB):
         preprocessor = create_bernoulli_preprocessor()
     else:
         preprocessor = create_preprocessor()
 
-    return Pipeline([
-        ("preprocessor", preprocessor),
-        ("model", model)
-    ])
+    steps = [
+        ("preprocessor", preprocessor)
+    ]
+
+    if sampling == "over":
+        steps.append((
+            "sampler",
+            RandomOverSampler(
+                sampling_strategy = 0.2,
+                random_state = 42
+            )
+        ))
+
+    elif sampling == "under":
+        steps.append((
+            "sampler",
+            RandomUnderSampler(
+                sampling_strategy = 0.2,
+                random_state = 42
+            )
+        ))
+
+    steps.append(("model", model))
+
+    return Pipeline(steps)
 
 # %%
 
@@ -139,7 +163,9 @@ def get_models():
 
         # Navie-Bayes
         "BernoulliNB": {
-            "model": BernoulliNB(binarize = None),
+            "model": BernoulliNB(
+                binarize = None
+            ),
             "params": {
                 "model__alpha": [0.1, 0.5, 1.0],
             }
@@ -148,18 +174,12 @@ def get_models():
 
 # %%
 
-
-import numpy as np
-import pandas as pd
-from sklearn.model_selection import TimeSeriesSplit
-
-
-def create_temporal_cv(dates, n_splits=5):
+def create_temporal_cv(dates, n_splits = 5):
     dates = pd.to_datetime(dates).reset_index(drop=True)
 
     unique_dates = np.sort(dates.unique())
 
-    tscv = TimeSeriesSplit(n_splits=n_splits)
+    tscv = TimeSeriesSplit(n_splits = n_splits)
 
     folds = []
 
@@ -182,18 +202,29 @@ def create_temporal_cv(dates, n_splits=5):
 
 # %%
 
-def create_grid_search(model, params):
-    pipeline = create_pipeline(model)
+def create_grid_search(model, params, train_dates, sampling = None):
+    pipeline = create_pipeline(
+        model = model,
+        sampling = sampling
+    )
 
     cv = create_temporal_cv(
-        dates = train_dates,
-        n_split = 5
+        train_dates,
+        n_splits = 5
     )
+
+    scoring = {
+    "AP": "average_precision",
+    "F1": "f1",
+    "Recall": "recall",
+    "Precision": "precision"
+}
 
     return GridSearchCV(
         estimator = pipeline,
         param_grid = params,
-        scoring = "average_precision",
+        scoring = scoring,
+        refit = "AP", # Calcula as quatro métricas para cada combinação de hiperparâmetros.
         cv = cv,
         n_jobs = 2,
         verbose = 2

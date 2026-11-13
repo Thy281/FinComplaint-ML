@@ -1,5 +1,6 @@
 # %%
-
+import mlflow
+import mlflow.sklearn
 import sys
 from pathlib import Path
 
@@ -44,33 +45,55 @@ def main():
 # %%
 
 def train_models(X_train, y_train, train_dates):
+    mlflow.set_tracking_uri("http://127.0.0.1:5000/")
+    mlflow.set_experiment("model-received")
+
     models = get_models()
     results = {}
 
+    sampling_methods = [None, "over", "under"]
+
     for name, config in models.items():
-        print(f"\nTreinando: {name}")
+        for sampling in sampling_methods:
 
-        model = config["model"]
-        params = config["params"]
+            sampling_name = sampling or "original"
+            run_name = f"{name}_{sampling_name}"
 
-        grid = create_grid_search(
-            model = model,
-            params = params,
-            train_dates = train_dates,
-            sampling = "over"
-        )
+            print(f"\nTreinando: {run_name}")
 
-        grid.fit(X_train, y_train)
+            with mlflow.start_run(run_name = run_name):
+                grid = create_grid_search(
+                    model = config["model"],
+                    params = config["params"],
+                    train_dates = train_dates,
+                    sampling = sampling
+                )
+                grid.fit(X_train, y_train)
 
-        results[name] = {
-            "best_model": grid.best_estimator_,
-            "best_params": grid.best_params_,
-            "best_score": grid.best_score_,
-            "grid": grid
-        }
+                mlflow.log_params(grid.best_params_)
+                mlflow.log_params({
+                    "algorithm": name,
+                    "sampling": sampling_name
+                })
+                mlflow.log_metrics({
+                    "cv_average_precision": grid.best_score_,
+                    "cv_f1": grid.cv_results_["mean_test_F1"][grid.best_index_],
+                    "cv_recall": grid.cv_results_["mean_test_Recall"][grid.best_index_],
+                    "cv_precision": grid.cv_results_["mean_test_Precision"][grid.best_index_]
+                })
+                mlflow.sklearn.log_model(
+                    sk_model = grid.best_estimator_,
+                    name = "model",
+                    serialization_format = "cloudpickle"
+                )
 
-        print(f"Melhor AP: {grid.best_score_:.4f}")
-        print(f"Melhores parâmetros: {grid.best_params_}")
+                results[run_name] = {
+                    "best_model": grid.best_estimator_,
+                    "best_params": grid.best_params_,
+                    "best_score": grid.best_score_
+                }
+
+                print(f"AP: {grid.best_score_:.4f}")
 
     return results
 

@@ -101,3 +101,7 @@ Training runs 12 model-and-sampling configurations, each with temporal search, a
 - The [CFPB public database](https://www.consumerfinance.gov/complaint/data-use/) publishes complaints **after the company responds or after 15 days**. Therefore, this retrospective snapshot does not establish that the published values of `company`, `issue`, and `sub_issue` would have been available exactly at `date_received`. An operational application must confirm which values are available at that time.
 - The drop in OOT AP shows that Test performance should not be treated as guaranteed future performance. These results come from this historical sample and do not represent all complaints in the market.
 - CSVs, Parquet files, the SQLite database, and local MLflow artifacts are generated or obtained outside the code and ignored by Git. The report preserves the observed results; exact reproduction depends on using the same sample and versions, and the workflow was not rerun as part of this documentation.
+
+## License
+
+The code in this project is available under the [MIT License](LICENSE). The license applies to the project code; CFPB data and dependencies retain their own terms.

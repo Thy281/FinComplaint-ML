@@ -101,3 +101,7 @@ O treinamento executa 12 combinações de modelo e amostragem, cada uma com busc
 - A [base pública do CFPB](https://www.consumerfinance.gov/complaint/data-use/) publica reclamações **após a resposta da empresa ou 15 dias**. Assim, este snapshot retrospectivo não demonstra que os valores publicados de `company`, `issue` e `sub_issue` estariam disponíveis exatamente em `date_received`. Uma aplicação operacional precisa confirmar os valores disponíveis naquele instante.
 - A queda de AP no OOT mostra que o desempenho no Teste não deve ser tratado como desempenho futuro garantido. Os resultados são desta amostra histórica e não representam todas as reclamações do mercado.
 - CSV, Parquets, banco SQLite e artefatos locais do MLflow são gerados/obtidos fora do código e ignorados pelo Git. O relatório preserva os resultados observados; a reprodução exata depende da mesma amostra e das mesmas versões, e não foi reexecutada como parte da documentação.
+
+## Licença
+
+O código deste projeto está disponível sob a licença [MIT](LICENSE). A licença se aplica ao código do projeto; os dados do CFPB e as dependências mantêm seus próprios termos.

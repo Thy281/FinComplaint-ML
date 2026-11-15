@@ -1,5 +1,7 @@
 # FinComplaint ML
 
+[Português](README.md) | [English](README.en.md)
+
 Estudo retrospectivo de classificação para estimar o risco de uma empresa **não responder no prazo** a uma reclamação financeira. O objetivo de negócio seria ajudar a priorizar a triagem de reclamações; o projeto **não é um sistema de previsão em produção**.
 
 ## Dados e variável-alvo

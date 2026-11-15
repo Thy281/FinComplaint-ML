@@ -16,3 +16,10 @@ models/*
 !models/.gitkeep
 reports/figures/*
 !reports/figures/.gitkeep
+!reports/figures/training_cv_ap.png
+!reports/figures/test_oot_ap.png
+mlflow.db
+mlflow.db-shm
+mlflow.db-wal
+mlartifacts/
+mlruns/

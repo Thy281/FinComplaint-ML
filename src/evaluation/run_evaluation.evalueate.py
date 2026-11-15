@@ -19,8 +19,9 @@ from src.training.split import load_data, validate_dates, split_data, split_feat
 mlflow.set_tracking_uri("http://127.0.0.1:5000")
 
 df = validate_dates(load_data())
-_, test, _ = split_data(df)
+_, test, oot = split_data(df)
 X_test, y_test = split_features_target(test)
+X_oot, y_oot = split_features_target(oot)
 
 experiment = mlflow.get_experiment_by_name("model-received")
 if experiment is None:
@@ -52,5 +53,15 @@ test_results = evaluate_candidates(
     candidates = candidates,
     X_test = X_test,
     y_test = y_test
+)
+
+oot_results = evaluate_candidates(
+    candidates = {
+        "BernoulliNB_original": candidates["BernoulliNB_original"]
+    },
+    X_test = X_oot,
+    y_test = y_oot,
+    split = "oot",
+    threshold = 0.5
 )
 # %%

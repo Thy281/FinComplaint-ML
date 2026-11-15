@@ -43,14 +43,15 @@ def evaluate_model(model, X, y, split, threshold = 0.5):
 def evaluate_candidates(
     candidates,
     X_test,
-    y_test
+    y_test,
+    split = "test",
+    threshold = 0.5
 ):
     results = {}
 
     for name, run_id in candidates.items():
 
         model_uri = f"runs:/{run_id}/model"
-
         model = mlflow.sklearn.load_model(model_uri)
 
         with mlflow.start_run(run_id = run_id):
@@ -58,12 +59,13 @@ def evaluate_candidates(
                 model = model,
                 X = X_test,
                 y = y_test,
-                split = "test"
+                split = split,
+                threshold = threshold
             )
 
         results[name] = metrics
 
-        print(f"\nModelo: {name}")
+        print(f"\nModelo: {name} | Conjunto: {split}")
         print(metrics)
 
     return results

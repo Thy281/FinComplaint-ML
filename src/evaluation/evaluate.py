@@ -1,12 +1,25 @@
-# %
+# %%
 import mlflow
 import numpy as np
+import sys
+from pathlib import Path
+
+project_root = Path.cwd()
+while project_root != project_root.parent and not (project_root / "src/training/split.py").exists():
+    project_root = project_root.parent
+
+if str(project_root) not in sys.path:
+    sys.path.insert(0, str(project_root))
+
 from sklearn.metrics import (
     average_precision_score,
     precision_score,
     recall_score,
     f1_score,
     confusion_matrix,
+)
+from src.evaluation.ranking_metrics import (
+    ranking_metrics_at_5_percent
 )
 
 # %%
@@ -22,6 +35,11 @@ def evaluate_model(model, X, y, split, threshold = 0.5):
         y, predictions, labels = [0, 1]
     ).ravel()
 
+    ranking_metrics = ranking_metrics_at_5_percent(
+        y_true = y,
+        y_score = probabilities
+    )
+
     metrics = {
         f"{split}_average_precision": average_precision_score(y, probabilities),
         f"{split}_precision": precision_score(y, predictions, zero_division = 0),
@@ -33,6 +51,10 @@ def evaluate_model(model, X, y, split, threshold = 0.5):
         f"{split}_fp": int(fp),
         f"{split}_fn": int(fn),
         f"{split}_tp": int(tp),
+        **{
+            f"{split}_{key}": value
+            for key, value in ranking_metrics.items()
+        },
     }
 
     mlflow.log_metrics(metrics)
@@ -69,3 +91,5 @@ def evaluate_candidates(
         print(metrics)
 
     return results
+
+# %%

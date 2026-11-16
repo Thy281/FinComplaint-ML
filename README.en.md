@@ -43,13 +43,21 @@ Training compares Logistic Regression, Random Forest, XGBoost, and Bernoulli Nai
 
 ## Observed results
 
-Results recorded in the local `model-received` experiment on **November 15, 2026**, using a classification threshold of `0.5` for precision, recall, and F1:
+Results recorded in the local `model-received` experiment on **November 15–16, 2026**, using a classification threshold of `0.5` for precision, recall, and F1:
 
 | Model | Split | Average Precision | Precision | Recall | F1 |
 | --- | --- | ---: | ---: | ---: | ---: |
 | BernoulliNB (no sampling) | Test | 0.3832 | 0.1719 | 0.7449 | 0.2793 |
 | BernoulliNB (no sampling) | OOT | 0.2685 | 0.1641 | 0.6287 | 0.2602 |
 | XGBoost (*oversampling*) | Test | 0.2432 | 0.2463 | 0.2937 | 0.2679 |
+
+The ranking metrics examine the **5% of complaints with the highest predicted probability** of a late response in each split. Precision@5% is the fraction of late responses in this group; Recall@5% is the fraction of all late responses captured by it; Lift@5% compares Precision@5% with the split's late-response rate. The group size is rounded up when necessary. These metrics use the probability ranking and do not use the `0.5` threshold.
+
+| Model | Split | Precision@5% | Recall@5% | Lift@5% |
+| --- | --- | ---: | ---: | ---: |
+| BernoulliNB (no sampling) | Test | 28.86% | 51.58% | 10.32× |
+| BernoulliNB (no sampling) | OOT | 23.56% | 41.37% | 8.27× |
+| XGBoost (*oversampling*) | Test | 21.38% | 38.23% | 7.65× |
 
 The charts below were generated with Matplotlib from completed runs in the local MLflow database, with no synthetic data. The first shows AP from the temporal validation used for hyperparameter search; its values should not be directly compared with Test/OOT results.
 
@@ -59,7 +67,11 @@ The second chart shows only the splits that were actually evaluated. There is no
 
 ![Average Precision on Test and OOT for the evaluated candidates](reports/figures/test_oot_ap.png)
 
-BernoulliNB AP dropped by **0.1147 points** from Test to OOT (about **29.9%** in relative terms). This limits conclusions about temporal generalization; it does not invalidate the study. **XGBoost was not evaluated on OOT** by the current script. AP uses probabilities and is independent of the `0.5` threshold. See the [detailed evaluation](reports/evaluation.md), including run IDs, confusion matrices, and limitations.
+The third chart compares the top 5% metrics. On Test, BernoulliNB concentrates more late responses among the highest-score complaints than XGBoost; on OOT, all three BernoulliNB ranking metrics decline relative to Test.
+
+![Precision@5%, Recall@5%, and Lift@5% on Test and OOT](reports/figures/test_oot_ranking_at_5_percent.png)
+
+BernoulliNB AP dropped by **0.1147 points** from Test to OOT (about **29.9%** in relative terms). This limits conclusions about temporal generalization; it does not invalidate the study. **XGBoost was not evaluated on OOT** by the current script. AP uses probabilities and is independent of the `0.5` threshold. See the [ranking analysis](nootbooks/ranking_analysis.ipynb) and the [detailed evaluation](reports/evaluation.md), including run IDs, confusion matrices, and limitations.
 
 ## Reproducing the workflow
 
@@ -95,6 +107,8 @@ python src/evaluation/plot_results.py
 ```
 
 Training runs 12 model-and-sampling configurations, each with temporal search, and may take a while. The evaluation script selects the most recent completed runs for `BernoulliNB_original` and `XGBoost_over`, evaluates both on Test, and evaluates only `BernoulliNB_original` on OOT. The final command recreates the charts from `mlflow.db` without retraining.
+
+To explore the ranking table and chart in Jupyter, open `nootbooks/ranking_analysis.ipynb` with the `.venv` environment. The notebook reads metrics from the runs recorded in `mlflow.db`; it does not retrain or produce new predictions.
 
 ## Limitations and repository organization
 

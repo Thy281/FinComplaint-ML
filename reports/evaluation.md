@@ -1,10 +1,10 @@
-# Avaliação temporal — snapshot de 15/11/2026
+# Avaliação temporal — snapshot de 15–16/11/2026
 
 Este relatório registra **métricas já existentes** no experimento MLflow local `model-received`; não é uma nova execução de treinamento ou avaliação. Os dados vieram da ABT local de 555.957 linhas, obtida do CSV com SHA-256 `df219bbcf0e8233f33eb83454ef9b3451adf471db29618acfb36d2dacc40ed3f`.
 
 ## Protocolo
 
-`late_response = 1` significa que a empresa não respondeu no prazo. A divisão por `date_received` reserva as datas mais recentes para OOT e não divide um mesmo dia entre conjuntos. O ajuste e a busca temporal de hiperparâmetros usam apenas Treino; o script de avaliação carrega os runs concluídos e registra métricas de Teste/OOT neles. A classificação usa limiar `0,5`, enquanto Average Precision (AP) usa as probabilidades.
+`late_response = 1` significa que a empresa não respondeu no prazo. A divisão por `date_received` reserva as datas mais recentes para OOT e não divide um mesmo dia entre conjuntos. O ajuste e a busca temporal de hiperparâmetros usam apenas Treino; o script de avaliação carrega os runs concluídos e registra métricas de Teste/OOT neles. A classificação usa limiar `0,5`, enquanto Average Precision (AP) e as métricas de ranking usam as probabilidades.
 
 | Conjunto | Datas inclusivas | N | Positivos | Taxa positiva |
 | --- | --- | ---: | ---: | ---: |
@@ -20,11 +20,20 @@ Este relatório registra **métricas já existentes** no experimento MLflow loca
 | BernoulliNB_original | OOT | 0,2685 | 0,1641 | 0,6287 | 0,2602 | 73.583 | 7.627 | 884 | 1.497 |
 | XGBoost_over | Teste | 0,2432 | 0,2463 | 0,2937 | 0,2679 | 79.083 | 2.099 | 1.650 | 686 |
 
+O top 5% seleciona as reclamações com maior probabilidade prevista de atraso em cada conjunto, arredondando a quantidade de linhas para cima. Precision@5% é a proporção de atrasos nesse grupo; Recall@5% é a proporção de todos os atrasos encontrados nele; Lift@5% é Precision@5% dividida pela taxa positiva do conjunto. Essas métricas não usam o limiar `0,5`.
+
+| Run | Conjunto | Precision@5% | Recall@5% | Lift@5% |
+| --- | --- | ---: | ---: | ---: |
+| BernoulliNB_original | Teste | 28,86% | 51,58% | 10,32× |
+| BernoulliNB_original | OOT | 23,56% | 41,37% | 8,27× |
+| XGBoost_over | Teste | 21,38% | 38,23% | 7,65× |
+
 Run IDs dos registros mais recentes consultados: `BernoulliNB_original` = `253bde4ddf134e2e820aa0d9127cb947`; `XGBoost_over` = `bc25bb01677e4577acaa937d6fe9431f`. A AP média da validação cruzada temporal desses runs foi, respectivamente, `0,1340` e `0,1148`; as janelas da validação diferem do Teste e do OOT, portanto esses valores não são uma comparação pareada de conjuntos.
 
 ## Leitura dos resultados
 
 - Para BernoulliNB, a AP cai de `0,383218` no Teste para `0,268476` no OOT: diferença absoluta de **−0,114742** e relativa de **−29,9%**. Precision, recall e F1 também caem no OOT com limiar `0,5`.
+- No Teste, BernoulliNB apresenta valores maiores que XGBoost nas três métricas do top 5%. No OOT, Precision@5%, Recall@5% e Lift@5% de BernoulliNB são menores que no Teste. A [análise de ranking](../nootbooks/ranking_analysis.ipynb) lê esses valores dos runs registrados e mostra o gráfico.
 - O OOT possui 2,85% de positivos, mas isso não elimina a queda de AP. A diferença indica menor capacidade de ordenar casos de atraso no período mais recente; não identifica, por si só, a causa da mudança.
 - `XGBoost_over` só tem métricas de Teste no fluxo atual. Não há base para afirmar seu desempenho no OOT ou escolher entre os dois modelos por generalização temporal.
 

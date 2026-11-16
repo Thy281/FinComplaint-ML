@@ -1,3 +1,5 @@
+# %%
+
 from pathlib import Path
 import sqlite3
 
@@ -91,6 +93,45 @@ def plot_evaluation(connection):
     plt.close(fig)
 
 
+def plot_ranking(connection):
+    cases = (
+        ("BernoulliNB_original", "test", "BernoulliNB\nTeste"),
+        ("XGBoost_over", "test", "XGBoost + over\nTeste"),
+        ("BernoulliNB_original", "oot", "BernoulliNB\nOOT"),
+    )
+    measures = (
+        ("precision_at_5_percent", "Precision@5%", 100, "%"),
+        ("recall_at_5_percent", "Recall@5%", 100, "%"),
+        ("lift_at_5_percent", "Lift@5%", 1, "×"),
+    )
+    colors = ("#2374ab", "#e18b3a", "#67a773")
+    fig, axes = plt.subplots(1, 3, figsize=(15, 5.2))
+
+    for ax, (key, title, scale, unit) in zip(axes, measures):
+        values = [
+            metric(connection, run_name, f"{split}_{key}") * scale
+            for run_name, split, _ in cases
+        ]
+        bars = ax.bar(
+            [label for _, _, label in cases], values, color=colors, width=0.62
+        )
+        ax.bar_label(
+            bars,
+            labels=[f"{value:.1f}{unit}" for value in values],
+            padding=4,
+            fontsize=9,
+        )
+        ax.set_ylim(0, max(values) * 1.2)
+        ax.set_title(title, fontweight="bold")
+        ax.grid(axis="y", alpha=0.2)
+        ax.set_axisbelow(True)
+
+    fig.suptitle("Ranking dos 5% com maior score", fontweight="bold")
+    fig.tight_layout()
+    fig.savefig(OUTPUT / "test_oot_ranking_at_5_percent.png", dpi=160)
+    plt.close(fig)
+
+
 def main():
     if not DATABASE.is_file():
         raise FileNotFoundError(f"Banco MLflow não encontrado: {DATABASE}")
@@ -98,8 +139,11 @@ def main():
     with sqlite3.connect(DATABASE.as_uri() + "?mode=ro", uri=True) as connection:
         plot_training(connection)
         plot_evaluation(connection)
+        plot_ranking(connection)
     print(f"Gráficos salvos em {OUTPUT}")
 
 
 if __name__ == "__main__":
     main()
+
+# %%

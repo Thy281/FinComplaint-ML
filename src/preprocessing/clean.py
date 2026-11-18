@@ -26,7 +26,7 @@ def convert_dates(df):
     for col in date_columns:
         df[col] = pd.to_datetime(
             df[col],
-            errors = "coerce"
+            errors = "coerce" 
         )
     return df
 

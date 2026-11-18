@@ -39,40 +39,32 @@ def create_features(df):
     return df
 
 # %%
-# Inputacao de features
-
 def select_features(df):
     df = df.copy()
 
     target = "late_response"
 
-    drop_columns = [
-        "timely_response",
-        "company_response_to_consumer",
-        "company_public_response",
-        "consumer_disputed?",
-        "date_sent_to_company",
-        "complaint_id",
-        "consumer_complaint_narrative",
-        "consumer_consent_provided",
-        "tags",
-        "zipcode"
+    features = [
+        "product",
+        "sub_product",
+        "issue",
+        "sub_issue",
+        "company",
+        "state",
+        "submitted_via",
+        "received_year",
+        "received_month",
+        "received_dayofweek"
     ]
 
-    # Selecao indireta das features
-    features = df.columns.drop(
-        [target, "date_received"] + drop_columns
-    )
+    expected_columns = ["date_received"] + features + [target]
+    missing_columns = [col for col in expected_columns if col not in df.columns]
+    if missing_columns:
+        raise ValueError(f"Colunas esperadas ausentes na ABT: {', '.join(missing_columns)}")
 
-    abt = df[["date_received"] + features.tolist() + [target]].copy()
+    abt = df[expected_columns].copy()
 
     return abt
-
-abt = select_features(df)
-
-print("Dimensoes:", abt.shape)
-print("Colunas:", abt.columns.to_list())
-
 
 # %%
 
@@ -86,6 +78,8 @@ if __name__ == "__main__":
     df = build_abt()
     df = create_features(df)
     abt = select_features(df)
+    print("Dimensoes:", abt.shape)
+    print("Colunas:", abt.columns.to_list())
     save_abt(abt)
 
 # %%
